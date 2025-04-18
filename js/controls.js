@@ -1,6 +1,7 @@
 class Controls {
-    constructor(aircraft) {
+    constructor(aircraft, scene) {
         this.aircraft = aircraft;
+        this.scene = scene;
         this.keys = {
             w: false,
             s: false,
@@ -10,7 +11,8 @@ class Controls {
             e: false,
             up: false,
             down: false,
-            space: false
+            space: false,
+            z: false  // Add z key for zeroing controls
         };
 
         // Add event listeners
@@ -47,6 +49,9 @@ class Controls {
             case ' ':
                 this.keys.space = true;
                 break;
+            case 'z':
+                this.keys.z = true;
+                break;
         }
         this.updateAircraft();
     }
@@ -80,47 +85,73 @@ class Controls {
             case ' ':
                 this.keys.space = false;
                 break;
+            case 'z':
+                this.keys.z = false;
+                break;
         }
         this.updateAircraft();
     }
 
     updateAircraft() {
-        // Update throttle
+        // Update throttle with faster response
         if (this.keys.up) {
-            this.aircraft.throttle = Math.min(1, this.aircraft.throttle + 0.01);
+            this.aircraft.throttle = Math.min(1, this.aircraft.throttle + 0.05);
         }
         if (this.keys.down) {
-            this.aircraft.throttle = Math.max(0, this.aircraft.throttle - 0.01);
+            this.aircraft.throttle = Math.max(0, this.aircraft.throttle - 0.05);
+        }
+        // Auto-throttle to maintain speed when in the air
+        if (this.aircraft.altitude > 50 && !this.keys.up && !this.keys.down) {
+            this.aircraft.throttle = Math.max(0.3, this.aircraft.throttle);
         }
 
-        // Update pitch
+        // Keyboard controls with W=up, S=down
         if (this.keys.w) {
-            this.aircraft.pitch = Math.min(Math.PI / 4, this.aircraft.pitch + 0.01);
+            this.aircraft.pitch += 0.1;
+            this.aircraft.pitch = Math.min(Math.PI/3, this.aircraft.pitch);
         }
         if (this.keys.s) {
-            this.aircraft.pitch = Math.max(-Math.PI / 4, this.aircraft.pitch - 0.01);
-        }
-
-        // Update roll
-        if (this.keys.a) {
-            this.aircraft.roll = Math.min(Math.PI / 4, this.aircraft.roll + 0.01);
+            this.aircraft.pitch -= 0.1;
+            this.aircraft.pitch = Math.max(-Math.PI/3, this.aircraft.pitch);
         }
         if (this.keys.d) {
-            this.aircraft.roll = Math.max(-Math.PI / 4, this.aircraft.roll - 0.01);
+            this.aircraft.roll += 0.1;
+            this.aircraft.roll = Math.min(Math.PI/2, this.aircraft.roll);
+        }
+        if (this.keys.a) {
+            this.aircraft.roll -= 0.1;
+            this.aircraft.roll = Math.max(-Math.PI/2, this.aircraft.roll);
         }
 
-        // Update yaw
+        // Yaw control with auto-coordination (helps with turning)
         if (this.keys.q) {
-            this.aircraft.yaw = Math.min(Math.PI / 4, this.aircraft.yaw + 0.01);
+            this.aircraft.yaw += 0.1;
+            this.aircraft.yaw = Math.min(Math.PI/4, this.aircraft.yaw);
         }
         if (this.keys.e) {
-            this.aircraft.yaw = Math.max(-Math.PI / 4, this.aircraft.yaw - 0.01);
+            this.aircraft.yaw -= 0.1;
+            this.aircraft.yaw = Math.max(-Math.PI/4, this.aircraft.yaw);
         }
 
-        // Handle missile firing
-        if (this.keys.space) {
-            // Add missile firing logic here
-            console.log('Missile fired!');
+        // Smoothly return to zero when Z is pressed
+        if (this.keys.z) {
+            const returnRate = 0.1; // Rate at which controls return to zero
+            this.aircraft.pitch *= (1 - returnRate);
+            this.aircraft.roll *= (1 - returnRate);
+            this.aircraft.yaw *= (1 - returnRate);
+        }
+
+        // Handle gatling gun firing
+        if (this.keys.space && this.scene) {
+            const bullet = this.aircraft.fireBullet();
+            if (bullet) {
+                this.scene.add(bullet);
+            }
+        }
+
+        // Update bullets if they exist
+        if (this.scene) {
+            this.aircraft.updateBullets(1/60, this.scene);
         }
     }
 } 

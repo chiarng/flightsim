@@ -37,4 +37,24 @@ body {
 .control-group p {
     margin: 5px 0;
     font-size: 14px;
+}
+
+#controls-info {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#controls-info div {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #fff;
+}
+
+#controls-info div.zero {
+    color: #0f0;  /* Green for zero position */
+}
+
+#controls-info div.non-zero {
+    color: #f00;  /* Red for non-zero position */
 } 
